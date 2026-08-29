@@ -4,6 +4,7 @@ import ServiceTicket from '../models/ServiceTicket.js';
 import User from '../models/User.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { classifyIssue } from '../services/aiService.js';
+import { sendTicketConfirmationEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ const generateTicketId = () => {
 // @route   POST /api/tickets
 // @desc    Create a new service support ticket
 router.post('/', protect, async (req, res) => {
-  const { serialNumber, productModel, category, description, location, attachments, priority } = req.body;
+  const { serialNumber, productModel, category, description, location, attachments, priority, farmerName, farmerPhone, email } = req.body;
 
   if (!serialNumber || !productModel || !category || !description) {
     return res.status(400).json({ success: false, message: 'Please provide serialNumber, productModel, category, and description.' });
@@ -38,12 +39,15 @@ router.post('/', protect, async (req, res) => {
       }
     ];
 
+    let savedTicket;
+
     if (global.isMockDB) {
       const newTicket = mockDBActions.create('tickets', {
         ticketId,
         farmerId: req.user._id,
-        farmerName: req.user.name,
-        farmerPhone: req.user.phone,
+        farmerName: farmerName || req.user.name,
+        farmerPhone: farmerPhone || req.user.phone,
+        farmerEmail: email || req.user.email,
         serialNumber,
         productModel,
         category,
@@ -63,20 +67,21 @@ router.post('/', protect, async (req, res) => {
         type: 'NEW_TICKET',
         ticketId,
         category,
-        farmerName: req.user.name,
+        farmerName: farmerName || req.user.name,
         productModel,
         priority: resolvedPriority,
         timestamp: new Date()
       });
 
-      return res.status(201).json({ success: true, ticket: newTicket });
+      savedTicket = newTicket;
     } else {
       // Mongoose DB
       const ticket = await ServiceTicket.create({
         ticketId,
         farmerId: req.user._id,
-        farmerName: req.user.name,
-        farmerPhone: req.user.phone,
+        farmerName: farmerName || req.user.name,
+        farmerPhone: farmerPhone || req.user.phone,
+        farmerEmail: email || req.user.email,
         serialNumber,
         productModel,
         category,
@@ -95,14 +100,33 @@ router.post('/', protect, async (req, res) => {
         type: 'NEW_TICKET',
         ticketId,
         category,
-        farmerName: req.user.name,
+        farmerName: farmerName || req.user.name,
         productModel,
         priority: resolvedPriority,
         timestamp: new Date()
       });
 
-      return res.status(201).json({ success: true, ticket });
+      savedTicket = ticket;
     }
+
+    // Try sending email confirmation to the farmer
+    const recipientEmail = email || req.user.email;
+    const recipientName = farmerName || req.user.name;
+    if (recipientEmail) {
+      try {
+        await sendTicketConfirmationEmail({
+          to: recipientEmail,
+          name: recipientName,
+          ticketId: savedTicket.ticketId,
+          productModel: savedTicket.productModel,
+          description: description
+        });
+      } catch (emailErr) {
+        console.error('⚠️ Non-blocking email dispatch error:', emailErr);
+      }
+    }
+
+    return res.status(201).json({ success: true, ticket: savedTicket });
   } catch (error) {
     console.error('Create ticket error:', error);
     res.status(500).json({ success: false, message: 'Server error creating support ticket.' });

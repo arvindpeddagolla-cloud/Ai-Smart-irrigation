@@ -31,6 +31,7 @@ export default function CustomerCare({ setActiveTab, setTrackedTicketId }) {
   // Form Fields
   const [name, setName] = useState(user ? user.name : 'Ramesh Patel');
   const [phone, setPhone] = useState(user ? user.phone : '+91 98765 43210');
+  const [email, setEmail] = useState(user ? user.email : 'ramesh@gmail.com');
   const [serial, setSerial] = useState(activeDevice ? activeDevice.serialNumber : 'SI123456');
   const [subType, setSubType] = useState('Soil Moisture Sensor');
   const [desc, setDesc] = useState('');
@@ -48,6 +49,11 @@ export default function CustomerCare({ setActiveTab, setTrackedTicketId }) {
       nextErrors.phone = 'Phone number is required.';
     } else if (!/^\+?[0-9\s-]{10,15}$/.test(phone)) {
       nextErrors.phone = 'Invalid phone number format.';
+    }
+    if (!email.trim()) {
+      nextErrors.email = 'Email address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      nextErrors.email = 'Invalid email address format.';
     }
     if (!serial.trim()) {
       nextErrors.serial = 'Serial number is required.';
@@ -87,7 +93,10 @@ export default function CustomerCare({ setActiveTab, setTrackedTicketId }) {
       category: selectedCat.title,
       description: `[${subType}] ${desc}`,
       location,
-      attachments
+      attachments,
+      farmerName: name,
+      farmerPhone: phone,
+      email: email
     };
 
     const res = await createTicket(ticketData);
@@ -131,18 +140,15 @@ export default function CustomerCare({ setActiveTab, setTrackedTicketId }) {
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-extrabold text-emerald-800 font-display">✓ SERVICE REQUEST CREATED</h2>
-            <p className="text-gray-500 text-xs font-medium">Your request has been dispatched to our maintenance team.</p>
+            <h2 className="text-2xl font-extrabold text-emerald-800 font-display">✓ COMPLAINT REGISTERED</h2>
           </div>
 
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left space-y-2">
-            <p className="text-xs text-gray-400 font-bold">TICKET ID</p>
-            <p className="text-lg font-mono font-extrabold text-slate-800">{successTicket.ticketId}</p>
-            
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-200/50">
-              <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full animate-status-pulse"></span>
-              <span className="text-xs font-bold text-gray-600">🟡 REQUEST RECEIVED</span>
-            </div>
+            <p className="text-sm font-bold text-gray-700">Ticket ID: <span className="font-mono font-extrabold text-slate-800">{successTicket.ticketId}</span></p>
+            <p className="text-xs text-gray-500 mt-2 font-medium">
+              Your complaint has been successfully registered.<br />
+              Our support team will contact you shortly by phone.
+            </p>
           </div>
 
           <div className="flex gap-3">
@@ -174,7 +180,7 @@ export default function CustomerCare({ setActiveTab, setTrackedTicketId }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Name</label>
                 <input
@@ -187,6 +193,20 @@ export default function CustomerCare({ setActiveTab, setTrackedTicketId }) {
                   }`}
                 />
                 {errors.name && <p className="text-[10px] text-red-500 font-bold mt-1">{errors.name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={`w-full bg-slate-50 border rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold ${
+                    errors.email ? 'border-red-400' : 'border-gray-200'
+                  }`}
+                />
+                {errors.email && <p className="text-[10px] text-red-500 font-bold mt-1">{errors.email}</p>}
               </div>
 
               <div>

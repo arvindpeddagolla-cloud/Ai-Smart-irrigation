@@ -10,6 +10,7 @@ export default function RepairRequest({ setActiveTab, setTrackedTicketId }) {
   } = useApp();
 
   const [serialNumber, setSerialNumber] = useState(activeDevice ? activeDevice.serialNumber : 'SI123456');
+  const [email, setEmail] = useState(user ? user.email : 'ramesh@gmail.com');
   const [problem, setProblem] = useState('');
   const [isWorking, setIsWorking] = useState('NO');
   const [hasWarranty, setHasWarranty] = useState('YES');
@@ -29,7 +30,10 @@ export default function RepairRequest({ setActiveTab, setTrackedTicketId }) {
       category: 'Request Repair',
       description: `[Is Working: ${isWorking}] [Warranty: ${hasWarranty}] [Service Preference: ${preferredService}] ${problem}`,
       priority: 'HIGH',
-      location: location
+      location: location,
+      farmerName: user ? user.name : 'Ramesh Patel',
+      farmerPhone: user ? user.phone : '+91 98765 43210',
+      email: email
     };
 
     const res = await createTicket(ticketData);
@@ -49,14 +53,15 @@ export default function RepairRequest({ setActiveTab, setTrackedTicketId }) {
             <CheckCircle size={32} />
           </div>
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-emerald-800 font-display">✓ REPAIR TICKET FILED</h2>
-            <p className="text-xs text-gray-500 font-semibold">Your device is now queued for service.</p>
+            <h2 className="text-xl font-bold text-emerald-800 font-display">✓ COMPLAINT REGISTERED</h2>
           </div>
 
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left space-y-1">
-            <p className="text-[10px] text-gray-400 font-bold">REPAIR TICKET ID</p>
-            <p className="text-base font-mono font-extrabold text-slate-800">{successTicket.ticketId}</p>
-            <p className="text-xs text-gray-500 mt-2">Preferred Dispatch: <span className="font-bold text-gray-700">{preferredService}</span></p>
+            <p className="text-sm font-bold text-gray-700">Ticket ID: <span className="font-mono font-extrabold text-slate-800">{successTicket.ticketId}</span></p>
+            <p className="text-xs text-gray-500 mt-2 font-medium">
+              Your complaint has been successfully registered.<br />
+              Our support team will contact you shortly by phone.
+            </p>
           </div>
 
           <button
@@ -172,6 +177,18 @@ export default function RepairRequest({ setActiveTab, setTrackedTicketId }) {
                   </label>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Email Address</label>
+              <input
+                type="email"
+                required
+                placeholder="ramesh@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold"
+              />
             </div>
 
             <div>

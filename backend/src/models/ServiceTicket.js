@@ -17,6 +17,7 @@ const ServiceTicketSchema = new mongoose.Schema({
   farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   farmerName: { type: String, required: true },
   farmerPhone: { type: String, required: true },
+  farmerEmail: { type: String },
   serialNumber: { type: String, required: true },
   productModel: { type: String, required: true },
   category: { type: String, required: true },
